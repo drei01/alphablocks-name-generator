@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Alphablocks Name Generator</title>
+        <meta charset="UTF-8" />
+        <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="description" content="Generate and pronounce your childs name using Alphablocks characters" />
+        <meta name="theme-color" content="#aed138" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Karla&display=swap" rel="stylesheet" />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style type="text/css">
+            body {
+                font-family: 'Karla', sans-serif;
+                background-color: #aed138;
+            }
+            .alphaland {
+                background-image: url('images/alphaland.png');
+                background-repeat: no-repeat;
+                background-position: bottom;
+                height: 50vh;
+            }
+        </style>
+        <script>
+            function getLetters(name) {
+                return name.split('').filter((char) => char !== ' ');
+            }
+            function handleKeydown(event) {
+                if (/[^a-zA-Z\s]/g.test(event.key)) {
+                    event.preventDefault();
+                }
+            }
+            function handleNameChange(event) {
+                var characters = document.getElementById('characters');
+                var name = event.target.value;
+                if (name) {
+                    var images = getLetters(name).map(
+                        (char) =>
+                            `<img src="images/letters/AB_${char.toUpperCase()}.png" alt="letter ${char.toUpperCase()}" class="place-self-end"/>`
+                    );
+                    characters.innerHTML = images.join('');
+                    characters.className = `alphaland w-full grid grid-cols-${
+                        images.length > 12 ? '12' : images.length
+                    }`;
+                    document.getElementById('play-button').classList.remove('hidden');
+                } else {
+                    characters.innerHTML = '';
+                    document.getElementById('play-button').classList.add('hidden');
+                }
+            }
+
+            function playPhonic(letter, index) {
+                var letterElement = document.getElementById('characters').children[index];
+                letterElement.classList.add('animate-bounce');
+                var player = document.getElementById(`audio_${letter.toLowerCase()}`);
+                player.currentTime = 0;
+                player.play();
+
+                setTimeout(function () {
+                    letterElement.classList.remove('animate-bounce');
+                    player.pause();
+                    player.currentTime = 0;
+                }, 3000);
+            }
+
+            function sayWord(name) {
+                if (window.speechSynthesis) {
+                    var utterance = new SpeechSynthesisUtterance(name.trim());
+                    utterance.lang = 'en-GB';
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
+
+            var playing = false;
+
+            function handlePlayButtonClick() {
+                if (playing) {
+                    return;
+                }
+                playing = true;
+                var name = document.getElementById('nameInput').value;
+                if (name) {
+                    var letters = getLetters(name);
+                    var index = 0;
+                    playPhonic(letters[index], index); //play first letter to avoid waiting
+                    var interval = setInterval(function () {
+                        if (index < letters.length - 1) {
+                            index++;
+                            playPhonic(letters[index], index);
+                        } else {
+                            clearInterval(interval);
+                            sayWord(name);
+                            playing = false;
+                        }
+                    }, 4000);
+                }
+            }
+
+            window.addEventListener('load', (event) => {
+                var input = document.getElementById('nameInput');
+                input.addEventListener('keydown', handleKeydown);
+                input.addEventListener('keyup', handleNameChange);
+
+                var playButton = document.getElementById('play-button');
+                playButton.addEventListener('click', handlePlayButtonClick);
+            });
+        </script>
+    </head>
+    <body>
+        <div class="h-screen flex items-center w-full">
+            <img src="images/logo.png" alt="Alphablocks logo" class="w-80 pl-8 absolute left-0 top-0" />
+            <div class="md:text-4xl text-xl text-center flex-grow flex flex-col items-center">
+                <div id="characters" class="alphaland w-full grid"></div>
+                <svg
+                    id="play-button"
+                    version="1.1"
+                    viewBox="0 0 128 128"
+                    xml:space="preserve"
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-32 py-4 hidden cursor-pointer"
+                >
+                    <style>
+                        .st1 {
+                            fill: #fff;
+                        }
+                    </style>
+                    <circle cx="64" cy="64" r="64" fill="#31af91" />
+                    <path
+                        class="st1"
+                        d="M60.5 38 38 52H28c-2.2 0-4 1.8-4 4v16c0 2.2 1.8 4 4 4h10l22.5 14c.6.5 1.5 0 1.5-.8V38.8c0-.7-.8-1.2-1.5-.8zM87.7 96.8l-1.3-1.5c-.4-.4-.3-1 .1-1.4C95.1 86.3 100 75.5 100 64c0-11.8-5.1-22.9-14.1-30.5-.2-.1-.5-.4-.9-.7s-.5-.9-.2-1.3l1.1-1.7c.3-.5 1-.6 1.4-.2l1 .8C98.3 38.8 104 51 104 64c0 12.6-5.4 24.6-14.8 33-.5.3-1.1.3-1.5-.2z"
+                    />
+                    <path
+                        class="st1"
+                        d="m79.1 88.3-1.2-1.6c-.3-.4-.3-1 .2-1.4C84.4 80 88 72.3 88 64s-3.6-16-10-21.3c-.4-.3-.5-1-.2-1.4l1.2-1.6c.3-.4 1-.5 1.4-.2C87.8 45.7 92 54.5 92 64s-4.2 18.3-11.5 24.4c-.4.4-1 .3-1.4-.1z"
+                    />
+                    <path
+                        class="st1"
+                        d="M69.6 78.2c-.4-.4-.3-1.1.1-1.4 4-3.1 6.3-7.8 6.3-12.7 0-5.1-2.3-9.8-6.3-12.7-.4-.3-.5-1-.2-1.4l1.3-1.5c.3-.4.9-.5 1.4-.2C77.1 51.8 80 57.7 80 64c0 6.1-2.9 11.9-7.7 15.8-.4.3-1 .3-1.4-.1l-1.3-1.5z"
+                    />
+                </svg>
+                <div class="lg:w-1/4 w-full px-4">
+                    <h1>What is your name?</h1>
+                    <input
+                        id="nameInput"
+                        type="text"
+                        name="name"
+                        placeholder="Your Name"
+                        class="w-full mt-4 px-4 py-2 border-b-2 border-gray-400 focus:outline-none focus:border-blue-400 uppercase text-center"
+                    />
+                </div>
+            </div>
+        </div>
+        <audio
+            id="audio_a"
+            src="audio/a.mp3"
+            class="hidden"
+            type="audio/mp3"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_b"
+            src="audio/b.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_c"
+            src="audio/c.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_d"
+            src="audio/d.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_e"
+            src="audio/e.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_f"
+            src="audio/f.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_g"
+            src="audio/g.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_h"
+            src="audio/h.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_i"
+            src="audio/i.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_j"
+            src="audio/j.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_k"
+            src="audio/k.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_l"
+            src="audio/l.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_m"
+            src="audio/m.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_n"
+            src="audio/n.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_o"
+            src="audio/o.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_p"
+            src="audio/p.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_q"
+            src="audio/q.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_r"
+            src="audio/r.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_s"
+            src="audio/s.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_t"
+            src="audio/t.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_u"
+            src="audio/u.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_v"
+            src="audio/v.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_w"
+            src="audio/w.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_x"
+            src="audio/x.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_y"
+            src="audio/y.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+        <audio
+            id="audio_z"
+            src="audio/z.mp3"
+            class="hidden"
+            type="audio/wav"
+            preload="auto"
+            autobuffer
+            controls
+        ></audio>
+    </body>
+</html>
